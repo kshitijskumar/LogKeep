@@ -2,10 +2,9 @@ package org.example.logkeep.core
 
 object LogKeep {
 
-    private val helper by lazy { LogKeepHelperSetter.helper }
-
     internal fun init(config: LogKeepConfig = LogKeepConfig()) {
-        // Phase 1
+        val driver = PlatformRegistry.getHelper().provideSqlDriver()
+        // Phase 1: create database, open session, etc.
     }
 
     fun log(
