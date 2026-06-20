@@ -2,12 +2,12 @@ CREATE TABLE Session (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     startedAt    INTEGER NOT NULL,
     endedAt      INTEGER,
-    endedCleanly INTEGER NOT NULL DEFAULT 0,
+    endedCleanly INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
     entryCount   INTEGER NOT NULL DEFAULT 0
 );
 
 insertSession:
-INSERT INTO Session VALUES ?;
+INSERT INTO Session (startedAt, endedAt, endedCleanly, entryCount) VALUES (?, ?, ?, ?);
 
 lastInsertRowId:
 SELECT last_insert_rowid();
@@ -29,3 +29,9 @@ SELECT * FROM Session ORDER BY startedAt ASC LIMIT 1;
 
 sessionCount:
 SELECT COUNT(*) FROM Session;
+
+markSessionActive:
+UPDATE Session SET endedAt = NULL, endedCleanly = 0 WHERE id = :id;
+
+decrementEntryCount:
+UPDATE Session SET entryCount = entryCount - 1 WHERE id = :id;
