@@ -13,21 +13,20 @@ import org.example.logkeep.AndroidPlatformHelper
 class LogKeepInitProvider : ContentProvider() {
 
     override fun onCreate(): Boolean {
+        println("LogStuff: provider oncreate")
         val ctx = context?.applicationContext ?: return false
 
         val meta = ctx.packageManager
             .getApplicationInfo(ctx.packageName, PackageManager.GET_META_DATA)
             .metaData ?: Bundle()
 
-        val isDebug = (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
-        if (!isDebug) {
-            return false
-        }
         val config = LogKeepConfig(
             isEnabled = meta.getBoolean("logkeep.isEnabled", false),
             maxEntriesPerSession = meta.getInt("logkeep.maxEntriesPerSession", 1_000),
             maxSessions = meta.getInt("logkeep.maxSessions", 5)
         )
+
+        println("LogStuff: provider config: $config")
 
         if (!config.isEnabled) return false
 
@@ -35,8 +34,14 @@ class LogKeepInitProvider : ContentProvider() {
         LogKeep.init(config)
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStop(owner: LifecycleOwner) { LogKeep.markSessionClean() }
-            override fun onStart(owner: LifecycleOwner) { LogKeep.markSessionActive() }
+            override fun onStop(owner: LifecycleOwner) {
+                println("LogStuff: provider stop")
+                LogKeep.markSessionClean()
+            }
+            override fun onStart(owner: LifecycleOwner) {
+                println("LogStuff: provider start")
+                LogKeep.markSessionActive()
+            }
         })
 
         return true

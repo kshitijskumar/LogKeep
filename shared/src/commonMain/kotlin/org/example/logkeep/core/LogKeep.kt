@@ -15,6 +15,7 @@ object LogKeep {
     @Volatile private var engine: LogKeepEngine? = null
 
     internal fun init(config: LogKeepConfig) {
+        println("LogStuff: init called: $engine")
         synchronized(lock) {
             if (engine != null) return
             if (!config.isEnabled) return
@@ -29,6 +30,7 @@ object LogKeep {
     }
 
     fun log(level: LogLevel, tag: String, message: String, throwable: Throwable? = null) {
+        println("LogStuff: log called: $level - $tag - $message - $engine")
         engine?.log(level, tag, message, throwable)
     }
 

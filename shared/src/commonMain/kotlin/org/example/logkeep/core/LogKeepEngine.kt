@@ -22,6 +22,7 @@ internal class LogKeepEngine(
             sessionRepo.getOldestSessionId()?.let { sessionRepo.deleteSession(it) } ?: break
         }
         currentSessionId = sessionRepo.createSession(TimeProvider.now())
+        println("LogStuff: session created: $currentSessionId")
     }
 
     fun log(level: LogLevel, tag: String, message: String, throwable: Throwable?) {
