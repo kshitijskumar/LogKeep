@@ -1,7 +1,13 @@
 package org.example.logkeep.core.repository
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.Flow
 import org.example.logkeep.core.utils.TimeProvider
 import org.example.logkeep.db.LogKeepDatabase
+import org.example.logkeep.db.Session
 
 internal class SessionRepository(private val db: LogKeepDatabase) {
 
@@ -34,4 +40,7 @@ internal class SessionRepository(private val db: LogKeepDatabase) {
     fun deleteSession(id: Long) {
         db.sessionQueries.deleteSession(id)
     }
+
+    fun observeAllSessions(): Flow<List<Session>> =
+        db.sessionQueries.allSessions().asFlow().mapToList(Dispatchers.IO)
 }
