@@ -21,11 +21,17 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.example.logkeep.db.Session
+import kotlin.time.ExperimentalTime
 
 @Composable
 internal fun SessionsScreen(
-    viewModel: SessionsViewModel = viewModel(),
-    onSessionClick: (sessionId: Long) -> Unit = {}
+    viewModel: SessionsViewModel = viewModel(
+        initializer = {
+            SessionsViewModel(
+                sessionClickedDelegate = { println("LogStuff: session clicked: $it") }
+            )
+        }
+    )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sessions = uiState.sessions
@@ -44,7 +50,7 @@ internal fun SessionsScreen(
         else -> {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(items = sessions, key = { it.id }) { session ->
-                    SessionItem(session = session, onClick = { onSessionClick(session.id) })
+                    SessionItem(session = session, onClick = { viewModel.onSessionClicked(session.id) })
                     HorizontalDivider()
                 }
             }
@@ -63,6 +69,7 @@ private fun SessionItem(session: Session, onClick: () -> Unit) {
     )
 }
 
+@OptIn(ExperimentalTime::class)
 private fun formatSessionTime(epochMillis: Long): String {
     val dt = Instant.fromEpochMilliseconds(epochMillis)
         .toLocalDateTime(TimeZone.currentSystemDefault())

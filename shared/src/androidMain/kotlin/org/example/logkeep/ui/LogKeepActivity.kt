@@ -14,6 +14,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.example.logkeep.ui.sessions.SessionsScreen
 
 internal class LogKeepActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +34,7 @@ private fun LogKeepStubScreen() {
             modifier = Modifier.padding(padding).fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Sessions")
+            SessionsScreen()
         }
     }
 }

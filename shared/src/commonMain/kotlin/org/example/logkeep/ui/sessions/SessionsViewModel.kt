@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.example.logkeep.core.LogKeep
 
-internal class SessionsViewModel : ViewModel() {
+internal class SessionsViewModel(
+    private val sessionClickedDelegate: (sessionId: Long) -> Unit
+) : ViewModel() {
 
     val uiState: StateFlow<SessionsUiState> = LogKeep.observeAllSessions()
         .map { sessions -> SessionsUiState(sessions = sessions) }
@@ -17,4 +19,8 @@ internal class SessionsViewModel : ViewModel() {
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SessionsUiState()
         )
+
+    fun onSessionClicked(sessionId: Long) {
+        sessionClickedDelegate.invoke(sessionId)
+    }
 }
