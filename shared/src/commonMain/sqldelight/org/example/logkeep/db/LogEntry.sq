@@ -2,14 +2,14 @@ CREATE TABLE LogEntry (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     sessionId  INTEGER NOT NULL REFERENCES Session(id) ON DELETE CASCADE,
     timestamp  INTEGER NOT NULL,
-    level      TEXT NOT NULL,
+    level      TEXT AS org.example.logkeep.core.LogLevel NOT NULL,
     tag        TEXT NOT NULL,
     message    TEXT NOT NULL,
     stackTrace TEXT
 );
 
 insertEntry:
-INSERT INTO LogEntry VALUES ?;
+INSERT INTO LogEntry (sessionId, timestamp, level, tag, message, stackTrace) VALUES (?, ?, ?, ?, ?, ?);
 
 entriesForSession:
 SELECT * FROM LogEntry WHERE sessionId = ? ORDER BY timestamp ASC;
@@ -22,3 +22,8 @@ SELECT * FROM LogEntry WHERE sessionId = ? ORDER BY timestamp ASC LIMIT 1;
 
 deleteEntry:
 DELETE FROM LogEntry WHERE id = ?;
+
+deleteOldestEntries:
+DELETE FROM LogEntry WHERE id IN (
+    SELECT id FROM LogEntry WHERE sessionId = :sessionId ORDER BY timestamp ASC LIMIT :count
+);

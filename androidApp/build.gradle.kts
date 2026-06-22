@@ -39,6 +39,10 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            manifestPlaceholders["logkeepEnabled"] = "false"
+        }
+        getByName("debug") {
+            manifestPlaceholders["logkeepEnabled"] = "true"
         }
     }
     compileOptions {

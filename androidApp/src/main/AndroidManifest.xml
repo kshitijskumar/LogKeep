@@ -17,6 +17,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="logkeep.isEnabled"
+            android:value="${logkeepEnabled}" />
+
+        <!-- Optional: max log entries kept per session before oldest are dropped (default 1000) -->
+        <meta-data
+            android:name="logkeep.maxEntriesPerSession"
+            android:value="1000" />
+
+        <!-- Optional: max sessions kept on device before oldest session is deleted (default 5) -->
+        <meta-data
+            android:name="logkeep.maxSessions"
+            android:value="5" />
     </application>
 
 </manifest>
