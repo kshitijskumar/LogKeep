@@ -18,6 +18,7 @@ internal object LogKeepActivityWatcher : Application.ActivityLifecycleCallbacks 
     private val buttons = WeakHashMap<Activity, View>()
 
     override fun onActivityResumed(activity: Activity) {
+        if (activity is LogKeepActivity) return
         val btn = createFloatingButton(activity)
         (activity.window.decorView as ViewGroup).addView(btn)
         buttons[activity] = btn
