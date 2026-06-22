@@ -7,6 +7,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import org.example.logkeep.core.repository.LogEntryInsert
 import org.example.logkeep.core.repository.LogEntryRepository
 import org.example.logkeep.core.repository.SessionRepository
 import org.example.logkeep.core.utils.TimeProvider
@@ -40,18 +42,35 @@ internal class LogKeepEngine(
         println("LogStuff: session created: $currentSessionId")
 
         scope.launch {
-            for (request in channel) {
-                entryRepo.insertEntry(
-                    sessionId = currentSessionId,
-                    timestamp = request.timestamp,
-                    level = request.level,
-                    tag = request.tag,
-                    message = request.message,
-                    stackTrace = request.stackTrace
-                )
-                if (entryRepo.getEntryCount(currentSessionId) > config.maxEntriesPerSession) {
-                    entryRepo.deleteOldestEntry(currentSessionId)
+            startProcessingLogRequests()
+        }
+    }
+
+    private suspend fun startProcessingLogRequests() {
+        for (firstRequest in channel) {
+            val batch = mutableListOf(firstRequest)
+            withTimeoutOrNull(config.batchWindowMs) {
+                while (batch.size < config.maxBatchSize) {
+                    batch.add(channel.receive())
                 }
+            }
+
+            entryRepo.insertEntriesBatch(
+                sessionId = currentSessionId,
+                entries = batch.map {
+                    LogEntryInsert(
+                        timestamp = it.timestamp,
+                        level = it.level,
+                        tag = it.tag,
+                        message = it.message,
+                        stackTrace = it.stackTrace
+                    )
+                }
+            )
+            val count = entryRepo.getEntryCount(currentSessionId)
+            val overflow = count - config.maxEntriesPerSession
+            if (overflow > 0) {
+                entryRepo.deleteOldestEntries(currentSessionId, overflow)
             }
         }
     }

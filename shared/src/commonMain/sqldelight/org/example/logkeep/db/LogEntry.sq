@@ -22,3 +22,8 @@ SELECT * FROM LogEntry WHERE sessionId = ? ORDER BY timestamp ASC LIMIT 1;
 
 deleteEntry:
 DELETE FROM LogEntry WHERE id = ?;
+
+deleteOldestEntries:
+DELETE FROM LogEntry WHERE id IN (
+    SELECT id FROM LogEntry WHERE sessionId = :sessionId ORDER BY timestamp ASC LIMIT :count
+);

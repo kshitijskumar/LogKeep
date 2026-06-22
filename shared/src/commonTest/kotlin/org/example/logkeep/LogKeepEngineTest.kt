@@ -19,11 +19,22 @@ private data class EngineSetup(
     val db: LogKeepDatabase
 )
 
-private fun buildEngine(maxEntries: Int = 1_000, maxSessions: Int = 5): EngineSetup {
+private fun buildEngine(
+    maxEntries: Int = 1_000,
+    maxSessions: Int = 5,
+    maxBatchSize: Int = 1,
+    batchWindowMs: Long = 1_000L
+): EngineSetup {
     val db = createTestDatabase()
     val sr = SessionRepository(db)
     val er = LogEntryRepository(db)
-    val config = LogKeepConfig(isEnabled = true, maxEntriesPerSession = maxEntries, maxSessions = maxSessions)
+    val config = LogKeepConfig(
+        isEnabled = true,
+        maxEntriesPerSession = maxEntries,
+        maxSessions = maxSessions,
+        maxBatchSize = maxBatchSize,
+        batchWindowMs = batchWindowMs
+    )
     // Dispatchers.Unconfined makes launched coroutines run synchronously — safe for tests
     val eng = LogKeepEngine(config, sr, er, CoroutineScope(Dispatchers.Unconfined))
     return EngineSetup(eng, sr, er, db)
@@ -98,5 +109,32 @@ class LogKeepEngineTest {
         val session = db.sessionQueries.allSessions().executeAsList()
             .first { it.id == eng.currentSessionId }
         assertEquals(false, session.endedCleanly)
+    }
+
+    @Test
+    fun batchInsertsAllEntriesOnSizeTrigger() {
+        val batchSize = 5
+        val (eng, _, er) = buildEngine(maxBatchSize = batchSize)
+        repeat(batchSize) { i -> eng.log(LogLevel.DEBUG, "T", "msg-$i", null) }
+        assertEquals(batchSize.toLong(), er.getEntryCount(eng.currentSessionId))
+    }
+
+    @Test
+    fun batchOverflowTrimsToMaxEntries() {
+        val maxEntries = 5
+        val batchSize = maxEntries + 3
+        val (eng, _, er) = buildEngine(maxEntries = maxEntries, maxBatchSize = batchSize)
+        repeat(batchSize) { i -> eng.log(LogLevel.DEBUG, "T", "msg-$i", null) }
+        assertEquals(maxEntries.toLong(), er.getEntryCount(eng.currentSessionId))
+    }
+
+    @Test
+    fun batchEntryCountMatchesSessionEntryCount() {
+        val batchSize = 5
+        val (eng, _, _, db) = buildEngine(maxBatchSize = batchSize)
+        repeat(batchSize) { i -> eng.log(LogLevel.INFO, "T", "msg-$i", null) }
+        val session = db.sessionQueries.allSessions().executeAsList()
+            .first { it.id == eng.currentSessionId }
+        assertEquals(batchSize.toLong(), session.entryCount)
     }
 }

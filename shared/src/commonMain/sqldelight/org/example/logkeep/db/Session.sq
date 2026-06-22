@@ -35,3 +35,9 @@ UPDATE Session SET endedAt = NULL, endedCleanly = 0 WHERE id = :id;
 
 decrementEntryCount:
 UPDATE Session SET entryCount = entryCount - 1 WHERE id = :id;
+
+incrementEntryCountBy:
+UPDATE Session SET entryCount = entryCount + :amount WHERE id = :id;
+
+decrementEntryCountBy:
+UPDATE Session SET entryCount = entryCount - :amount WHERE id = :id;
