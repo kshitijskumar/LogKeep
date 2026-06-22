@@ -9,6 +9,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import org.example.logkeep.AndroidPlatformHelper
+import org.example.logkeep.ui.LogKeepActivityWatcher
 
 class LogKeepInitProvider : ContentProvider() {
 
@@ -32,6 +33,7 @@ class LogKeepInitProvider : ContentProvider() {
 
         PlatformRegistry.setHelper(AndroidPlatformHelper(ctx))
         LogKeep.init(config)
+        (ctx as android.app.Application).registerActivityLifecycleCallbacks(LogKeepActivityWatcher)
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {

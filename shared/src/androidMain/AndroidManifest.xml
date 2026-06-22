@@ -6,5 +6,9 @@
             android:authorities="${applicationId}.logkeep"
             android:exported="false"
             android:initOrder="100" />
+        <activity
+            android:name="org.example.logkeep.ui.LogKeepActivity"
+            android:exported="false"
+            android:label="LogKeep" />
     </application>
 </manifest>
