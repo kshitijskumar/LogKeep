@@ -39,7 +39,7 @@ internal object LogKeepActivityWatcher : Application.ActivityLifecycleCallbacks 
 
 private fun createFloatingButton(context: Context): View {
     val btn = TextView(context).apply {
-        text = "LK"
+        text = "Logs"
         setBackgroundColor(Color.BLACK)
         setTextColor(Color.WHITE)
         setPadding(24, 16, 24, 16)
