@@ -17,6 +17,7 @@ object LogKeep {
 
     @Volatile private var engine: LogKeepEngine? = null
     @Volatile internal var sessionRepo: SessionRepository? = null
+    @Volatile internal var logEntryRepo: LogEntryRepository? = null
 
     internal fun init(config: LogKeepConfig) {
         println("LogStuff: init called: $engine")
@@ -30,8 +31,10 @@ object LogKeep {
                 LogEntryAdapter = LogEntry.Adapter(levelAdapter = logLevelAdapter)
             )
             val repo = SessionRepository(db)
+            val logRepo = LogEntryRepository(db)
             sessionRepo = repo
-            engine = LogKeepEngine(config, repo, LogEntryRepository(db))
+            logEntryRepo = logRepo
+            engine = LogKeepEngine(config, repo, logRepo)
         }
     }
 
@@ -46,4 +49,10 @@ object LogKeep {
 
     internal fun observeAllSessions(): Flow<List<Session>> =
         sessionRepo?.observeAllSessions() ?: emptyFlow()
+
+    internal fun observeLogsForSession(sessionId: Long): Flow<List<LogEntry>> =
+        logEntryRepo?.observeEntriesForSession(sessionId) ?: emptyFlow()
+
+    internal fun observeSessionById(id: Long): Flow<Session?> =
+        sessionRepo?.observeSessionById(id) ?: emptyFlow()
 }
