@@ -12,12 +12,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -40,6 +45,26 @@ internal fun LogsDisplayScreen(sessionId: Long) {
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val logs = uiState.logs
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        var prevSize = 0
+        var capturedIsAtTop = true
+
+        snapshotFlow {
+            Pair(
+                listState.firstVisibleItemIndex == 0,
+                uiState.logs?.size ?: 0
+            )
+        }.collectLatest { (atTop, size) ->
+            val hadNewItems = size > prevSize
+            if (hadNewItems && capturedIsAtTop) {
+                listState.animateScrollToItem(0)
+            }
+            capturedIsAtTop = atTop
+            prevSize = size
+        }
+    }
 
     when {
         logs == null -> {
@@ -48,7 +73,7 @@ internal fun LogsDisplayScreen(sessionId: Long) {
             }
         }
         logs.isEmpty() -> {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                 item {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -63,10 +88,13 @@ internal fun LogsDisplayScreen(sessionId: Long) {
             }
         }
         else -> {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                 items(items = logs, key = { it.id }) { entry ->
                     LogItem(entry = entry)
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(8.dp),
+                        color = DividerDefaults.color.copy(alpha = 0.5f)
+                    )
                 }
                 item(key = "session_start_footer") {
                     uiState.sessionStartedAt?.let { SessionStartFooter(it) }
@@ -110,7 +138,10 @@ private fun LogItem(entry: LogEntry) {
 @OptIn(ExperimentalTime::class)
 @Composable
 private fun SessionStartFooter(sessionStartedAt: Long) {
-    Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
         Text("Session started: ${formatSessionTime(sessionStartedAt)}")
     }
 }

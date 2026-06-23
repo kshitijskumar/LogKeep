@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            repeat(5) {
+            repeat(50) {
                 Logger.logDebug("MainActivity", "log count: $it")
                 kotlinx.coroutines.delay(500L)
             }

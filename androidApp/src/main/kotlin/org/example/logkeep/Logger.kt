@@ -8,7 +8,7 @@ object Logger {
 
     fun logDebug(tag: String, msg: String) {
         LogKeep.log(
-            level = LogLevel.DEBUG,
+            level = LogLevel.entries.random(),
             tag = tag,
             message = msg
         )
