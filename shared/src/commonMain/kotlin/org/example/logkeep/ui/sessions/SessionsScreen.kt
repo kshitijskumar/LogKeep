@@ -25,12 +25,9 @@ import kotlin.time.ExperimentalTime
 
 @Composable
 internal fun SessionsScreen(
+    onSessionClicked: (Long) -> Unit = {},
     viewModel: SessionsViewModel = viewModel(
-        initializer = {
-            SessionsViewModel(
-                sessionClickedDelegate = { println("LogStuff: session clicked: $it") }
-            )
-        }
+        initializer = { SessionsViewModel(sessionClickedDelegate = onSessionClicked) }
     )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
