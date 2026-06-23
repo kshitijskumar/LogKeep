@@ -27,6 +27,7 @@ import kotlin.time.ExperimentalTime
 @Composable
 internal fun LogsDisplayScreen(sessionId: Long) {
     val viewModel: LogsViewModel = viewModel(
+        key = sessionId.toString(),
         initializer = { LogsViewModel(sessionId) }
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
