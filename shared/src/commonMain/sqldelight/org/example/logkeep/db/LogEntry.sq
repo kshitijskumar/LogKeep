@@ -12,7 +12,7 @@ insertEntry:
 INSERT INTO LogEntry (sessionId, timestamp, level, tag, message, stackTrace) VALUES (?, ?, ?, ?, ?, ?);
 
 entriesForSession:
-SELECT * FROM LogEntry WHERE sessionId = ? ORDER BY timestamp ASC;
+SELECT * FROM LogEntry WHERE sessionId = ? ORDER BY timestamp DESC;
 
 entryCountForSession:
 SELECT COUNT(*) FROM LogEntry WHERE sessionId = ?;
@@ -27,3 +27,6 @@ deleteOldestEntries:
 DELETE FROM LogEntry WHERE id IN (
     SELECT id FROM LogEntry WHERE sessionId = :sessionId ORDER BY timestamp ASC LIMIT :count
 );
+
+deleteAllEntriesForSession:
+DELETE FROM LogEntry WHERE sessionId = :sessionId;

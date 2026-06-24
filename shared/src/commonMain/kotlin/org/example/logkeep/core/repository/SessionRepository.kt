@@ -2,6 +2,7 @@ package org.example.logkeep.core.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -43,4 +44,7 @@ internal class SessionRepository(private val db: LogKeepDatabase) {
 
     fun observeAllSessions(): Flow<List<Session>> =
         db.sessionQueries.allSessions().asFlow().mapToList(Dispatchers.IO)
+
+    fun observeSessionById(id: Long): Flow<Session?> =
+        db.sessionQueries.sessionById(id).asFlow().mapToOneOrNull(Dispatchers.IO)
 }

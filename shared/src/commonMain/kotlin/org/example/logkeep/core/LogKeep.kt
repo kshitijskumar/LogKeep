@@ -13,6 +13,11 @@ object LogKeep {
     private val lock = SynchronizedObject()
 
     @Volatile private var engine: LogKeepEngine? = null
+    @Volatile private var _sessionRepo: SessionRepository? = null
+    @Volatile private var _logEntryRepo: LogEntryRepository? = null
+
+    internal val sessionRepository: SessionRepository? get() = _sessionRepo
+    internal val logEntryRepository: LogEntryRepository? get() = _logEntryRepo
 
     internal fun init(config: LogKeepConfig) {
         println("LogStuff: init called: $engine")
@@ -25,7 +30,11 @@ object LogKeep {
                 driver = driver,
                 LogEntryAdapter = LogEntry.Adapter(levelAdapter = logLevelAdapter)
             )
-            engine = LogKeepEngine(config, SessionRepository(db), LogEntryRepository(db))
+            val repo = SessionRepository(db)
+            val logRepo = LogEntryRepository(db)
+            _sessionRepo = repo
+            _logEntryRepo = logRepo
+            engine = LogKeepEngine(config, repo, logRepo)
         }
     }
 
