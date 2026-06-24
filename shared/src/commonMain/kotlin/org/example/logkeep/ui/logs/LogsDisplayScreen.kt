@@ -1,24 +1,30 @@
 package org.example.logkeep.ui.logs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,6 +35,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -92,6 +99,9 @@ internal fun LogsDisplayScreen(
                     IconButton(onClick = { viewModel.deleteAllLogs() }) {
                         Text("Delete")
                     }
+                    IconButton(onClick = { viewModel.openFilterSheet() }) {
+                        Text(if (uiState.selectedLevel != null) "Filter*" else "Filter")
+                    }
                 }
             )
         }
@@ -134,6 +144,14 @@ internal fun LogsDisplayScreen(
                 }
             }
         }
+    }
+
+    if (uiState.isFilterSheetVisible) {
+        FilterBottomSheet(
+            selectedLevel = uiState.selectedLevel,
+            onLevelSelected = { viewModel.setLevelFilter(it) },
+            onDismiss = { viewModel.dismissFilterSheet() }
+        )
     }
 }
 
@@ -205,4 +223,52 @@ private fun LogLevel.panelColor(): Color = when (this) {
     LogLevel.ERROR -> Color(0x80FFB3B3)
     LogLevel.INFO -> Color(0x80FFFF99)
     LogLevel.WARN -> Color(0x80FFCC99)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterBottomSheet(
+    selectedLevel: LogLevel?,
+    onLevelSelected: (LogLevel) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(bottom = 32.dp)) {
+            Text(
+                "Filter by level",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            LogLevel.entries.forEach { level ->
+                FilterLevelRow(
+                    level = level,
+                    isSelected = level == selectedLevel,
+                    onClick = { onLevelSelected(level) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterLevelRow(level: LogLevel, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color = level.panelColor(), shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(level.displayName(), modifier = Modifier.weight(1f), fontSize = 14.sp)
+        if (isSelected) {
+            Text("✓", fontSize = 14.sp)
+        }
+    }
 }
