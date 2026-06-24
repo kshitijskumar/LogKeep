@@ -16,8 +16,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,16 +37,23 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.example.logkeep.core.LogKeep
 import org.example.logkeep.core.LogLevel
 import org.example.logkeep.db.LogEntry
 import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LogsDisplayScreen(sessionId: Long) {
-    val viewModel: LogsViewModel = viewModel(
+internal fun LogsDisplayScreen(
+    sessionId: Long,
+    onBack: () -> Unit,
+    viewModel: LogsViewModel = viewModel(
         key = sessionId.toString(),
-        initializer = { LogsViewModel(sessionId) }
+        initializer = {
+            LogsViewModel(sessionId, LogKeep.logEntryRepository!!, LogKeep.sessionRepository!!)
+        }
     )
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val logs = uiState.logs
     val listState = rememberLazyListState()
@@ -66,38 +77,60 @@ internal fun LogsDisplayScreen(sessionId: Long) {
         }
     }
 
-    when {
-        logs == null -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-        logs.isEmpty() -> {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No logs yet")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = uiState.sessionStartedAt?.let(::formatSessionTime) ?: "Logs"
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Text("Back") }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.deleteAllLogs() }) {
+                        Text("Delete")
                     }
                 }
-                item(key = "session_start_footer") {
-                    uiState.sessionStartedAt?.let { SessionStartFooter(it) }
-                }
-            }
+            )
         }
-        else -> {
-            LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                items(items = logs, key = { it.id }) { entry ->
-                    LogItem(entry = entry)
-                    HorizontalDivider(
-                        modifier = Modifier.padding(8.dp),
-                        color = DividerDefaults.color.copy(alpha = 0.5f)
-                    )
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            when {
+                logs == null -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
-                item(key = "session_start_footer") {
-                    uiState.sessionStartedAt?.let { SessionStartFooter(it) }
+                logs.isEmpty() -> {
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No logs yet")
+                            }
+                        }
+                        item(key = "session_start_footer") {
+                            uiState.sessionStartedAt?.let { SessionStartFooter(it) }
+                        }
+                    }
+                }
+                else -> {
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        items(items = logs, key = { it.id }) { entry ->
+                            LogItem(entry = entry)
+                            HorizontalDivider(
+                                modifier = Modifier.padding(8.dp),
+                                color = DividerDefaults.color.copy(alpha = 0.5f)
+                            )
+                        }
+                        item(key = "session_start_footer") {
+                            uiState.sessionStartedAt?.let { SessionStartFooter(it) }
+                        }
+                    }
                 }
             }
         }

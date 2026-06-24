@@ -27,3 +27,6 @@ deleteOldestEntries:
 DELETE FROM LogEntry WHERE id IN (
     SELECT id FROM LogEntry WHERE sessionId = :sessionId ORDER BY timestamp ASC LIMIT :count
 );
+
+deleteAllEntriesForSession:
+DELETE FROM LogEntry WHERE sessionId = :sessionId;

@@ -6,13 +6,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.example.logkeep.core.LogKeep
+import org.example.logkeep.core.repository.SessionRepository
 
 internal class SessionsViewModel(
+    private val sessionRepo: SessionRepository,
     private val sessionClickedDelegate: (sessionId: Long) -> Unit
 ) : ViewModel() {
 
-    val uiState: StateFlow<SessionsUiState> = LogKeep.observeAllSessions()
+    val uiState: StateFlow<SessionsUiState> = sessionRepo.observeAllSessions()
         .map { sessions -> SessionsUiState(sessions = sessions) }
         .stateIn(
             scope = viewModelScope,

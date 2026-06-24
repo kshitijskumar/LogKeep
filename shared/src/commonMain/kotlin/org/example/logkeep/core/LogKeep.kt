@@ -2,13 +2,10 @@ package org.example.logkeep.core
 
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import org.example.logkeep.core.repository.LogEntryRepository
 import org.example.logkeep.core.repository.SessionRepository
 import org.example.logkeep.db.LogEntry
 import org.example.logkeep.db.LogKeepDatabase
-import org.example.logkeep.db.Session
 import org.example.logkeep.db.logLevelAdapter
 import kotlin.concurrent.Volatile
 
@@ -16,8 +13,11 @@ object LogKeep {
     private val lock = SynchronizedObject()
 
     @Volatile private var engine: LogKeepEngine? = null
-    @Volatile internal var sessionRepo: SessionRepository? = null
-    @Volatile internal var logEntryRepo: LogEntryRepository? = null
+    @Volatile private var _sessionRepo: SessionRepository? = null
+    @Volatile private var _logEntryRepo: LogEntryRepository? = null
+
+    internal val sessionRepository: SessionRepository? get() = _sessionRepo
+    internal val logEntryRepository: LogEntryRepository? get() = _logEntryRepo
 
     internal fun init(config: LogKeepConfig) {
         println("LogStuff: init called: $engine")
@@ -32,8 +32,8 @@ object LogKeep {
             )
             val repo = SessionRepository(db)
             val logRepo = LogEntryRepository(db)
-            sessionRepo = repo
-            logEntryRepo = logRepo
+            _sessionRepo = repo
+            _logEntryRepo = logRepo
             engine = LogKeepEngine(config, repo, logRepo)
         }
     }
@@ -46,13 +46,4 @@ object LogKeep {
     internal fun markSessionClean() = engine?.markSessionClean()
 
     internal fun markSessionActive() = engine?.markSessionActive()
-
-    internal fun observeAllSessions(): Flow<List<Session>> =
-        sessionRepo?.observeAllSessions() ?: emptyFlow()
-
-    internal fun observeLogsForSession(sessionId: Long): Flow<List<LogEntry>> =
-        logEntryRepo?.observeEntriesForSession(sessionId) ?: emptyFlow()
-
-    internal fun observeSessionById(id: Long): Flow<Session?> =
-        sessionRepo?.observeSessionById(id) ?: emptyFlow()
 }

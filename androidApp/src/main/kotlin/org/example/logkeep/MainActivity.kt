@@ -8,8 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.time.delay
-import kotlin.time.Duration
+import kotlin.uuid.Uuid
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +22,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeat(50) {
-                Logger.logDebug("MainActivity", "log count: $it")
+                Logger.logDebug("MainActivity", "log count: $it - ${Uuid.random()}")
                 kotlinx.coroutines.delay(500L)
             }
         }

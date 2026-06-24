@@ -75,6 +75,13 @@ internal class LogEntryRepository(private val db: LogKeepDatabase) {
         }
     }
 
+    fun deleteAllEntriesForSession(sessionId: Long) {
+        db.transaction {
+            db.logEntryQueries.deleteAllEntriesForSession(sessionId)
+            db.sessionQueries.resetEntryCount(sessionId)
+        }
+    }
+
     fun observeEntriesForSession(sessionId: Long): Flow<List<LogEntry>> =
         db.logEntryQueries.entriesForSession(sessionId).asFlow().mapToList(Dispatchers.IO)
 }

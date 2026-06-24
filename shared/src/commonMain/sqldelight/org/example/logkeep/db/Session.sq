@@ -44,3 +44,6 @@ UPDATE Session SET entryCount = entryCount - :amount WHERE id = :id;
 
 sessionById:
 SELECT * FROM Session WHERE id = ?;
+
+resetEntryCount:
+UPDATE Session SET entryCount = 0 WHERE id = :id;
