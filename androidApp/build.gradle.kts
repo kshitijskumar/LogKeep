@@ -21,11 +21,11 @@ dependencies {
 }
 
 android {
-    namespace = "org.example.logkeep"
+    namespace = "io.kshitij.logkeep"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "org.example.logkeep"
+        applicationId = "io.kshitij.logkeep.sample"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

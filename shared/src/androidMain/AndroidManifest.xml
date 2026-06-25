@@ -2,12 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <provider
-            android:name="org.example.logkeep.core.LogKeepInitProvider"
+            android:name="io.kshitij.logkeep.core.LogKeepInitProvider"
             android:authorities="${applicationId}.logkeep"
             android:exported="false"
             android:initOrder="100" />
         <activity
-            android:name="org.example.logkeep.ui.LogKeepActivity"
+            android:name="io.kshitij.logkeep.ui.LogKeepActivity"
             android:exported="false"
             android:label="LogKeep" />
     </application>
