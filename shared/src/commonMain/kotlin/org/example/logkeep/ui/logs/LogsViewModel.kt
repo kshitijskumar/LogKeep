@@ -30,7 +30,9 @@ internal class LogsViewModel(
         }
         viewModelScope.launch {
             queryManager.filterState
-                .collect { filter -> _uiState.update { it.copy(selectedLevel = filter.level) } }
+                .collect { filter ->
+                    _uiState.update { it.copy(selectedLevel = filter.level, selectedTag = filter.tag) }
+                }
         }
         viewModelScope.launch {
             sessionRepo.observeSessionById(sessionId)
@@ -44,17 +46,38 @@ internal class LogsViewModel(
         }
     }
 
-    fun setLevelFilter(level: LogLevel?) {
-        val newLevel = if (level == _uiState.value.selectedLevel) null else level
-        queryManager.setLevelFilter(newLevel)
-        _uiState.update { it.copy(isFilterSheetVisible = false) }
-    }
-
     fun openFilterSheet() {
-        _uiState.update { it.copy(isFilterSheetVisible = true) }
+        _uiState.update {
+            it.copy(
+                isFilterSheetVisible = true,
+                pendingLevel = it.selectedLevel,
+                pendingTag = it.selectedTag
+            )
+        }
     }
 
     fun dismissFilterSheet() {
         _uiState.update { it.copy(isFilterSheetVisible = false) }
+    }
+
+    fun setPendingLevel(level: LogLevel?) {
+        val newLevel = if (level == _uiState.value.pendingLevel) null else level
+        _uiState.update { it.copy(pendingLevel = newLevel) }
+    }
+
+    fun setPendingTag(tag: String) {
+        _uiState.update { it.copy(pendingTag = tag) }
+    }
+
+    fun applyFilter() {
+        val current = _uiState.value
+        queryManager.setFilter(LogsFilter(level = current.pendingLevel, tag = current.pendingTag))
+        _uiState.update {
+            it.copy(
+                selectedLevel = it.pendingLevel,
+                selectedTag = it.pendingTag,
+                isFilterSheetVisible = false
+            )
+        }
     }
 }

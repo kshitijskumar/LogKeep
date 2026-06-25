@@ -19,12 +19,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -100,7 +102,7 @@ internal fun LogsDisplayScreen(
                         Text("Delete")
                     }
                     IconButton(onClick = { viewModel.openFilterSheet() }) {
-                        Text(if (uiState.selectedLevel != null) "Filter*" else "Filter")
+                        Text(if (uiState.isFilterActive) "Filter*" else "Filter")
                     }
                 }
             )
@@ -148,8 +150,11 @@ internal fun LogsDisplayScreen(
 
     if (uiState.isFilterSheetVisible) {
         FilterBottomSheet(
-            selectedLevel = uiState.selectedLevel,
-            onLevelSelected = { viewModel.setLevelFilter(it) },
+            pendingLevel = uiState.pendingLevel,
+            pendingTag = uiState.pendingTag,
+            onLevelSelected = { viewModel.setPendingLevel(it) },
+            onTagChanged = { viewModel.setPendingTag(it) },
+            onApply = { viewModel.applyFilter() },
             onDismiss = { viewModel.dismissFilterSheet() }
         )
     }
@@ -228,8 +233,11 @@ private fun LogLevel.panelColor(): Color = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterBottomSheet(
-    selectedLevel: LogLevel?,
+    pendingLevel: LogLevel?,
+    pendingTag: String,
     onLevelSelected: (LogLevel) -> Unit,
+    onTagChanged: (String) -> Unit,
+    onApply: () -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -243,9 +251,26 @@ private fun FilterBottomSheet(
             LogLevel.entries.forEach { level ->
                 FilterLevelRow(
                     level = level,
-                    isSelected = level == selectedLevel,
+                    isSelected = level == pendingLevel,
                     onClick = { onLevelSelected(level) }
                 )
+            }
+            OutlinedTextField(
+                value = pendingTag,
+                onValueChange = onTagChanged,
+                label = { Text("Filter by tag") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                singleLine = true
+            )
+            Button(
+                onClick = onApply,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text("Apply")
             }
         }
     }

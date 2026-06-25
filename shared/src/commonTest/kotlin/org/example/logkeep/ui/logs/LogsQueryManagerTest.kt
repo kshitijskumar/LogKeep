@@ -11,6 +11,7 @@ import org.example.logkeep.createTestDatabase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LogsQueryManagerTest {
@@ -119,5 +120,61 @@ class LogsQueryManagerTest {
         val logs = manager.logsFlow.first()
 
         assertEquals(0, logs.size)
+    }
+
+    @Test
+    fun tagFilterEmptyStringMatchesAll() = runTest(UnconfinedTestDispatcher()) {
+        val (_, er, sessionId) = setup()
+        er.insertEntry(sessionId, 1_001L, LogLevel.INFO, "AuthManager", "msg", null)
+        er.insertEntry(sessionId, 1_002L, LogLevel.DEBUG, "NetworkClient", "msg", null)
+        val manager = LogsQueryManager(sessionId, er)
+        manager.setFilter(LogsFilter(tag = ""))
+
+        val logs = manager.logsFlow.first()
+
+        assertEquals(2, logs.size)
+    }
+
+    @Test
+    fun tagFilterMatchesCaseInsensitiveContains() = runTest(UnconfinedTestDispatcher()) {
+        val (_, er, sessionId) = setup()
+        er.insertEntry(sessionId, 1_001L, LogLevel.INFO, "AuthManager", "msg", null)
+        er.insertEntry(sessionId, 1_002L, LogLevel.DEBUG, "authService", "msg", null)
+        er.insertEntry(sessionId, 1_003L, LogLevel.WARN, "NetworkClient", "msg", null)
+        val manager = LogsQueryManager(sessionId, er)
+        manager.setFilter(LogsFilter(tag = "auth"))
+
+        val logs = manager.logsFlow.first()
+
+        assertEquals(2, logs.size)
+        assertTrue(logs.all { it.tag.contains("auth", ignoreCase = true) })
+    }
+
+    @Test
+    fun tagFilterWithNoMatchYieldsEmptyList() = runTest(UnconfinedTestDispatcher()) {
+        val (_, er, sessionId) = setup()
+        er.insertEntry(sessionId, 1_001L, LogLevel.INFO, "AuthManager", "msg", null)
+        val manager = LogsQueryManager(sessionId, er)
+        manager.setFilter(LogsFilter(tag = "Network"))
+
+        val logs = manager.logsFlow.first()
+
+        assertEquals(0, logs.size)
+    }
+
+    @Test
+    fun levelAndTagFilterBothApplied() = runTest(UnconfinedTestDispatcher()) {
+        val (_, er, sessionId) = setup()
+        er.insertEntry(sessionId, 1_001L, LogLevel.INFO, "AuthManager", "msg", null)
+        er.insertEntry(sessionId, 1_002L, LogLevel.DEBUG, "AuthManager", "msg", null)
+        er.insertEntry(sessionId, 1_003L, LogLevel.INFO, "NetworkClient", "msg", null)
+        val manager = LogsQueryManager(sessionId, er)
+        manager.setFilter(LogsFilter(level = LogLevel.INFO, tag = "auth"))
+
+        val logs = manager.logsFlow.first()
+
+        assertEquals(1, logs.size)
+        assertEquals(LogLevel.INFO, logs.single().level)
+        assertEquals("AuthManager", logs.single().tag)
     }
 }

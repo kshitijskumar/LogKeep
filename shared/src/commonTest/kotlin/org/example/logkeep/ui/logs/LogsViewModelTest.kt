@@ -80,64 +80,124 @@ class LogsViewModelTest {
         assertFalse(vm.uiState.value.isFilterSheetVisible)
     }
 
-    // --- level filter ---
+    // --- pending level ---
 
     @Test
-    fun initialSelectedLevelIsNull() {
+    fun initialPendingLevelIsNull() {
         val (sr, er, sessionId) = setup()
         val vm = buildVm(sessionId, er, sr)
+        assertNull(vm.uiState.value.pendingLevel)
+    }
+
+    @Test
+    fun setPendingLevelUpdatesPendingLevel() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.INFO)
+        assertEquals(LogLevel.INFO, vm.uiState.value.pendingLevel)
+    }
+
+    @Test
+    fun setPendingLevelWithSameLevelClearsPending() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.WARN)
+        vm.setPendingLevel(LogLevel.WARN)
+        assertNull(vm.uiState.value.pendingLevel)
+    }
+
+    @Test
+    fun setPendingLevelWithDifferentLevelReplacesPending() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.DEBUG)
+        vm.setPendingLevel(LogLevel.ERROR)
+        assertEquals(LogLevel.ERROR, vm.uiState.value.pendingLevel)
+    }
+
+    @Test
+    fun setPendingLevelDoesNotChangeSelectedLevel() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.INFO)
         assertNull(vm.uiState.value.selectedLevel)
     }
 
+    // --- pending tag ---
+
     @Test
-    fun setLevelFilterUpdatesSelectedLevel() {
+    fun initialPendingTagIsEmpty() {
         val (sr, er, sessionId) = setup()
         val vm = buildVm(sessionId, er, sr)
-        vm.setLevelFilter(LogLevel.INFO)
-        assertEquals(LogLevel.INFO, vm.uiState.value.selectedLevel)
+        assertEquals("", vm.uiState.value.pendingTag)
     }
 
     @Test
-    fun setLevelFilterHidesFilterSheet() {
+    fun setPendingTagUpdatesPendingTag() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingTag("auth")
+        assertEquals("auth", vm.uiState.value.pendingTag)
+    }
+
+    @Test
+    fun setPendingTagDoesNotChangeSelectedTag() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingTag("auth")
+        assertEquals("", vm.uiState.value.selectedTag)
+    }
+
+    // --- open filter sheet initializes pending ---
+
+    @Test
+    fun openFilterSheetInitializesPendingFromApplied() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.ERROR)
+        vm.setPendingTag("net")
+        vm.applyFilter()
+        vm.dismissFilterSheet()
+
+        vm.openFilterSheet()
+
+        assertEquals(LogLevel.ERROR, vm.uiState.value.pendingLevel)
+        assertEquals("net", vm.uiState.value.pendingTag)
+    }
+
+    // --- apply filter ---
+
+    @Test
+    fun applyFilterCommitsPendingLevelAndTag() {
+        val (sr, er, sessionId) = setup()
+        val vm = buildVm(sessionId, er, sr)
+        vm.setPendingLevel(LogLevel.INFO)
+        vm.setPendingTag("auth")
+        vm.applyFilter()
+        assertEquals(LogLevel.INFO, vm.uiState.value.selectedLevel)
+        assertEquals("auth", vm.uiState.value.selectedTag)
+    }
+
+    @Test
+    fun applyFilterClosesSheet() {
         val (sr, er, sessionId) = setup()
         val vm = buildVm(sessionId, er, sr)
         vm.openFilterSheet()
-        vm.setLevelFilter(LogLevel.DEBUG)
+        vm.applyFilter()
         assertFalse(vm.uiState.value.isFilterSheetVisible)
     }
 
-    @Test
-    fun setLevelFilterWithSameLevelClearsSelection() {
-        val (sr, er, sessionId) = setup()
-        val vm = buildVm(sessionId, er, sr)
-        vm.setLevelFilter(LogLevel.WARN)
-        vm.setLevelFilter(LogLevel.WARN)
-        assertNull(vm.uiState.value.selectedLevel)
-    }
+    // --- dismiss reverts ---
 
     @Test
-    fun setLevelFilterWithDifferentLevelReplacesSelection() {
+    fun dismissFilterSheetDoesNotCommitPendingChanges() {
         val (sr, er, sessionId) = setup()
         val vm = buildVm(sessionId, er, sr)
-        vm.setLevelFilter(LogLevel.DEBUG)
-        vm.setLevelFilter(LogLevel.ERROR)
-        assertEquals(LogLevel.ERROR, vm.uiState.value.selectedLevel)
-    }
-
-    @Test
-    fun setLevelFilterNullClearsSelection() {
-        val (sr, er, sessionId) = setup()
-        val vm = buildVm(sessionId, er, sr)
-        vm.setLevelFilter(LogLevel.VERBOSE)
-        vm.setLevelFilter(null)
+        vm.openFilterSheet()
+        vm.setPendingLevel(LogLevel.DEBUG)
+        vm.setPendingTag("net")
+        vm.dismissFilterSheet()
         assertNull(vm.uiState.value.selectedLevel)
-    }
-
-    @Test
-    fun setLevelFilterNullWhenAlreadyClearedKeepsNull() {
-        val (sr, er, sessionId) = setup()
-        val vm = buildVm(sessionId, er, sr)
-        vm.setLevelFilter(null)
-        assertNull(vm.uiState.value.selectedLevel)
+        assertEquals("", vm.uiState.value.selectedTag)
     }
 }
