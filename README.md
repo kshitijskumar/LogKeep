@@ -1,31 +1,123 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# LogKeep
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+**LogKeep** is a Kotlin Multiplatform library for capturing, storing, and viewing in-app logs during debug sessions — think Chucker, but for logs.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
-
-### Running the apps
-
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
-
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
-
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+- Automatically captures logs to a local SQLite database organized by session
+- In-app viewer: browse sessions, filter by level or tag, delete old sessions
+- Detects clean vs crashed sessions so you never lose logs after a crash
+- No-op in release builds when `isEnabled = false` — all calls are skipped, no DB writes, no UI shown
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Installation
+
+### 1. Add JitPack to your repositories
+
+In `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+### 2. Add the dependency
+
+In your app/module `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("com.github.kshitijskumar:logkeep-android:0.1.0-alpha01")
+}
+```
+
+> Use `implementation` (not `debugImplementation`) — `LogKeep.log()` must be on the classpath in all build types since your app code calls it. Disable capture in release by setting `isEnabled = false` via manifest meta-data (see Configuration below).
+
+---
+
+## Usage
+
+### Android
+
+LogKeep initializes itself automatically via a `ContentProvider` — no code required in `Application` or `Activity`.
+
+```kotlin
+// Log from anywhere in your app
+LogKeep.log(LogLevel.DEBUG, "Network", "Request started")
+LogKeep.log(LogLevel.ERROR, "Network", "Request failed", exception)
+```
+
+Available log levels: `VERBOSE`, `DEBUG`, `INFO`, `WARN`, `ERROR`
+
+To open the LogKeep viewer, launch `LogKeepActivity`:
+
+```kotlin
+startActivity(Intent(context, LogKeepActivity::class.java))
+```
+
+### Configuration (optional)
+
+Override defaults via `<meta-data>` in your `AndroidManifest.xml`:
+
+```xml
+<application>
+    <meta-data android:name="logkeep.isEnabled"          android:value="true" />
+    <meta-data android:name="logkeep.maxEntriesPerSession" android:value="1000" />
+    <meta-data android:name="logkeep.maxSessions"        android:value="5" />
+</application>
+```
+
+### iOS
+
+Call `LogKeepIos.start()` before logging, typically in your app's entry point:
+
+```kotlin
+// In iOSApp.init() or SwiftUI @main body
+LogKeepIos.start(LogKeepConfig(isEnabled = true))
+```
+
+Then log the same way:
+
+```kotlin
+LogKeep.log(LogLevel.INFO, "AppStart", "App launched")
+```
+
+---
+
+## Configuration reference
+
+| Property | Default | Description |
+|---|---|---|
+| `isEnabled` | `true` | Set to `false` to disable all logging (no-op mode) |
+| `maxEntriesPerSession` | `1000` | Oldest entries are dropped when this limit is reached |
+| `maxSessions` | `5` | Oldest sessions are deleted when this limit is reached |
+| `maxBatchSize` | `20` | Number of entries to batch before flushing to DB |
+| `batchWindowMs` | `500` | Max time (ms) to wait before flushing a partial batch |
+
+---
+
+## Building the project
+
+```bash
+# Build the shared library
+./gradlew :shared:build
+
+# Run all tests
+./gradlew :shared:allTests
+
+# Build the Android demo app
+./gradlew :androidApp:assembleDebug
+
+# Publish to local Maven (~/.m2)
+./gradlew :shared:publishToMavenLocal
+```
+
+---
+
+## License
+
+Apache 2.0

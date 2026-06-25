@@ -4,7 +4,11 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight)
+    `maven-publish`
 }
+
+group = "com.github.kshitijskumar"
+version = providers.gradleProperty("logkeep.version").getOrElse("0.1.0-alpha01")
 
 kotlin {
     listOf(
@@ -12,13 +16,13 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "Shared"
+            baseName = "LogKeep"
             isStatic = true
         }
     }
     
     androidLibrary {
-       namespace = "org.example.logkeep.shared"
+       namespace = "io.kshitij.logkeep.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
        androidResources {
@@ -71,7 +75,15 @@ dependencies {
 sqldelight {
     databases {
         create("LogKeepDatabase") {
-            packageName.set("org.example.logkeep.db")
+            packageName.set("io.kshitij.logkeep.db")
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications.withType<MavenPublication> {
+            artifactId = artifactId.replace("shared", "logkeep")
         }
     }
 }
