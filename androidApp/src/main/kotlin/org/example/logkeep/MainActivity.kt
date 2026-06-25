@@ -22,7 +22,8 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeat(50) {
-                Logger.logDebug("MainActivity", "log count: $it - ${Uuid.random()}")
+                val tag = listOf("MainActivity", "SecondActivity").random()
+                Logger.logDebug(tag, "log count: $it - ${Uuid.random()}")
                 kotlinx.coroutines.delay(500L)
             }
         }

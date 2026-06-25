@@ -21,8 +21,17 @@ internal class LogsQueryManager(
         logEntryRepo.observeEntriesForSession(sessionId),
         _filter
     ) { logs, filter ->
-        val levelFilter = filter.level ?: return@combine logs
-        logs.filter { it.level == levelFilter }
+        var result = logs
+        filter.level?.let { level -> result = result.filter { it.level == level } }
+
+        val tag = filter.tag.trim()
+        if (tag.isNotEmpty()) result = result.filter { it.tag.contains(tag, ignoreCase = true) }
+
+        result
+    }
+
+    fun setFilter(filter: LogsFilter) {
+        _filter.value = filter
     }
 
     fun setLevelFilter(level: LogLevel?) {
