@@ -79,11 +79,3 @@ sqldelight {
         }
     }
 }
-
-afterEvaluate {
-    publishing {
-        publications.withType<MavenPublication> {
-            artifactId = artifactId.replace("shared", "logkeep")
-        }
-    }
-}

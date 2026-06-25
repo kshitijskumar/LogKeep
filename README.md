@@ -31,7 +31,7 @@ In your app/module `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.kshitijskumar:logkeep-android:0.1.0-alpha01")
+    implementation("com.github.kshitijskumar:LogKeep:0.1.0-alpha01")
 }
 ```
 
