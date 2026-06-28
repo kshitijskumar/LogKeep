@@ -6,11 +6,12 @@ import io.kshitij.logkeep.core.LogLevel
 
 object Logger {
 
-    fun logDebug(tag: String, msg: String) {
+    fun logDebug(tag: String, msg: String, throwable: Throwable? = null) {
         LogKeep.log(
             level = LogLevel.entries.random(),
             tag = tag,
-            message = msg
+            message = msg,
+            throwable = throwable
         )
         Log.d(tag, msg)
     }

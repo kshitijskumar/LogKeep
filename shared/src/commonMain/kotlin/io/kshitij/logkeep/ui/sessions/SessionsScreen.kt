@@ -171,7 +171,7 @@ private fun StatItem(value: String, label: String) {
 @Composable
 private fun DateGroupHeader(date: LocalDate) {
     val today = remember {
-        kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
     val label = when (date) {
         today -> "Today - ${monthAbbr(date.monthNumber)} ${date.dayOfMonth}"

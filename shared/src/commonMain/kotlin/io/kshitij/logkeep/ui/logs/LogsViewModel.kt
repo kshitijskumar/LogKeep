@@ -80,4 +80,13 @@ internal class LogsViewModel(
             )
         }
     }
+
+    fun resetPendingFilter() {
+        _uiState.update { it.copy(pendingLevel = null, pendingTag = "") }
+    }
+
+    fun clearFilter() {
+        queryManager.setFilter(LogsFilter())
+        resetPendingFilter()
+    }
 }

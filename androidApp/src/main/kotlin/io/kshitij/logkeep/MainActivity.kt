@@ -23,9 +23,18 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
+            val errorEntry = (0..50).random()
             repeat(50) {
                 val tag = listOf("MainActivity", "SecondActivity").random()
-                Logger.logDebug(tag, "log count: $it - ${Uuid.random()}")
+                if (it != errorEntry) {
+                    Logger.logDebug(tag, "log count: $it - ${Uuid.random()}")
+                } else {
+                    try {
+                        throw NullPointerException("Something somewhere went wrong")
+                    } catch (e: Exception) {
+                        Logger.logDebug(tag, "log count: $it - ${Uuid.random()}", e)
+                    }
+                }
                 kotlinx.coroutines.delay(500L)
             }
         }
