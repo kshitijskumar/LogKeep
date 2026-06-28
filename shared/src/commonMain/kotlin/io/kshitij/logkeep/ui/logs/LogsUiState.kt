@@ -10,7 +10,8 @@ internal data class LogsUiState(
     val selectedTag: String = "",
     val isFilterSheetVisible: Boolean = false,
     val pendingLevel: LogLevel? = null,
-    val pendingTag: String = ""
+    val pendingTag: String = "",
+    val isExportingFile: Boolean = false,
 ) {
     val isFilterActive: Boolean get() = selectedLevel != null || selectedTag.isNotEmpty()
 }

@@ -119,7 +119,7 @@ internal fun LogsDisplayScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Text(
-                            text = "←",
+                            text = "<",
                             fontSize = 20.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -127,17 +127,37 @@ internal fun LogsDisplayScreen(
                 },
                 actions = {
                     Box {
-                        IconButton(onClick = { isOverflowExpanded = true }) {
-                            Text(
-                                text = "⋮",
-                                fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        if (uiState.isExportingFile) {
+                            Box(
+                                modifier = Modifier.size(48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            IconButton(onClick = { isOverflowExpanded = true }) {
+                                Text(
+                                    text = "⋮",
+                                    fontSize = 18.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         DropdownMenu(
-                            expanded = isOverflowExpanded,
+                            expanded = isOverflowExpanded && !uiState.isExportingFile,
                             onDismissRequest = { isOverflowExpanded = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text("Share session") },
+                                onClick = {
+                                    viewModel.requestShareFile()
+                                    isOverflowExpanded = false
+                                }
+                            )
                             DropdownMenuItem(
                                 text = {
                                     Text(

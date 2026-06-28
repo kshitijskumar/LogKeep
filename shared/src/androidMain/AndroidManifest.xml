@@ -10,5 +10,14 @@
             android:name="io.kshitij.logkeep.ui.LogKeepActivity"
             android:exported="false"
             android:label="LogKeep" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.logkeep.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/logkeep_file_paths" />
+        </provider>
     </application>
 </manifest>
