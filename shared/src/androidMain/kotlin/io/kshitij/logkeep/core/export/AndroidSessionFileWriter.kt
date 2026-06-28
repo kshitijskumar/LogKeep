@@ -4,12 +4,12 @@ import android.content.Context
 import java.io.File
 
 internal class AndroidSessionFileWriter(private val context: Context) : SessionFileWriter {
-    override fun getOrCreateFile(fileName: String, content: String): String? {
+    override fun getOrCreateFile(baseName: String, content: String): String? {
         return try {
-            val txtFile = File(context.cacheDir, fileName)
+            val txtFile = File(context.cacheDir, "$baseName.txt")
             if (txtFile.exists()) return txtFile.absolutePath
 
-            val tmpFile = File(context.cacheDir, "$fileName.tmp")
+            val tmpFile = File(context.cacheDir, "$baseName.tmp")
             tmpFile.writeText(content)
             tmpFile.renameTo(txtFile)
             txtFile.absolutePath
