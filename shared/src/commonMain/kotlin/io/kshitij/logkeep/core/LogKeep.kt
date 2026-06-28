@@ -3,6 +3,7 @@ package io.kshitij.logkeep.core
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import io.kshitij.logkeep.core.export.SessionFileExporter
+import io.kshitij.logkeep.core.export.SessionSharer
 import io.kshitij.logkeep.core.repository.LogEntryRepository
 import io.kshitij.logkeep.core.repository.SessionRepository
 import io.kshitij.logkeep.db.LogEntry
@@ -25,6 +26,9 @@ object LogKeep {
             logEntryRepo = logEntryRepository!!,
             fileWriter = PlatformRegistry.getHelper().provideSessionFileWriter()
         )
+    }
+    internal val sessionSharer: SessionSharer by lazy {
+        PlatformRegistry.getHelper().provideSessionSharer()
     }
 
     internal fun init(config: LogKeepConfig) {
