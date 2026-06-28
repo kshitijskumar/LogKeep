@@ -14,6 +14,8 @@ internal class SessionFileExporter(
     private val logEntryRepo: LogEntryRepository,
     private val fileWriter: SessionFileWriter,
 ) {
+    private val mutex = Mutex()
+
     suspend fun getOrCreateSessionFile(sessionId: Long): String? = mutex.withLock {
         withContext(Dispatchers.IO) {
             val session = sessionRepo.observeSessionById(sessionId).firstOrNull() ?: return@withContext null
@@ -23,9 +25,5 @@ internal class SessionFileExporter(
             val content = SessionFileFormatter.format(session, entries)
             fileWriter.getOrCreateFile(baseName, content)
         }
-    }
-
-    companion object {
-        private val mutex = Mutex()
     }
 }

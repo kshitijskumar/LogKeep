@@ -2,6 +2,7 @@ package io.kshitij.logkeep.core
 
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import io.kshitij.logkeep.core.export.SessionFileExporter
 import io.kshitij.logkeep.core.repository.LogEntryRepository
 import io.kshitij.logkeep.core.repository.SessionRepository
 import io.kshitij.logkeep.db.LogEntry
@@ -18,6 +19,13 @@ object LogKeep {
 
     internal val sessionRepository: SessionRepository? get() = _sessionRepo
     internal val logEntryRepository: LogEntryRepository? get() = _logEntryRepo
+    internal val fileExporter: SessionFileExporter? by lazy {
+        SessionFileExporter(
+            sessionRepo = sessionRepository!!,
+            logEntryRepo = logEntryRepository!!,
+            fileWriter = PlatformRegistry.getHelper().provideSessionFileWriter()
+        )
+    }
 
     internal fun init(config: LogKeepConfig) {
         println("LogStuff: init called: $engine")
