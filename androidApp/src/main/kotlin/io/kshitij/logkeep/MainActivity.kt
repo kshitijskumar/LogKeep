@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalUuidApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         println("LogStuff: activity oncreate")
         enableEdgeToEdge()
@@ -21,9 +23,18 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
+            val errorEntry = (0..50).random()
             repeat(50) {
                 val tag = listOf("MainActivity", "SecondActivity").random()
-                Logger.logDebug(tag, "log count: $it - ${Uuid.random()}")
+                if (it != errorEntry) {
+                    Logger.logDebug(tag, "log count: $it - ${Uuid.random()}")
+                } else {
+                    try {
+                        throw NullPointerException("Something somewhere went wrong")
+                    } catch (e: Exception) {
+                        Logger.logDebug(tag, "log count: $it - ${Uuid.random()}", e)
+                    }
+                }
                 kotlinx.coroutines.delay(500L)
             }
         }
