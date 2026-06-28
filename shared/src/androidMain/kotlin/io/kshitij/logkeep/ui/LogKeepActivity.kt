@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.kshitij.logkeep.core.LogKeep
 import io.kshitij.logkeep.ui.navigation.LogKeepNavViewModel
+import io.kshitij.logkeep.ui.theme.LogKeepTheme
 
 internal class LogKeepActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,8 +18,10 @@ internal class LogKeepActivity : ComponentActivity() {
             return
         }
         setContent {
-            val navViewModel: LogKeepNavViewModel = viewModel()
-            LogKeepNavigationHost(navViewModel = navViewModel)
+            LogKeepTheme {
+                val navViewModel: LogKeepNavViewModel = viewModel()
+                LogKeepNavigationHost(navViewModel = navViewModel)
+            }
         }
     }
 }
