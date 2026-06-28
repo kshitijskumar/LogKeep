@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.kshitij.logkeep.core.LogLevel
+import io.kshitij.logkeep.core.PlatformRegistry
+import io.kshitij.logkeep.core.export.SessionFileExporter
 import io.kshitij.logkeep.core.repository.LogEntryRepository
 import io.kshitij.logkeep.core.repository.SessionRepository
 
@@ -17,7 +19,12 @@ internal class LogsViewModel(
     private val sessionId: Long,
     private val logEntryRepo: LogEntryRepository,
     private val sessionRepo: SessionRepository,
-    private val queryManager: LogsQueryManager = LogsQueryManager(sessionId, logEntryRepo)
+    private val queryManager: LogsQueryManager = LogsQueryManager(sessionId, logEntryRepo),
+    private val exporter: SessionFileExporter = SessionFileExporter(
+        sessionRepo,
+        logEntryRepo,
+        PlatformRegistry.getHelper().provideSessionFileWriter()
+    ),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LogsUiState())
@@ -88,5 +95,14 @@ internal class LogsViewModel(
     fun clearFilter() {
         queryManager.setFilter(LogsFilter())
         resetPendingFilter()
+    }
+
+    fun requestShareFile() {
+        if (_uiState.value.isExportingFile) return
+        _uiState.update { it.copy(isExportingFile = true) }
+        viewModelScope.launch {
+            val path = exporter.getOrCreateSessionFile(sessionId)
+            _uiState.update { it.copy(isExportingFile = false) }
+        }
     }
 }

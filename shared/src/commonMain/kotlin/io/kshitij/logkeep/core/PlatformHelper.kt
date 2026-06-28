@@ -1,6 +1,7 @@
 package io.kshitij.logkeep.core
 
 import app.cash.sqldelight.db.SqlDriver
+import io.kshitij.logkeep.core.export.SessionFileWriter
 
 /**
  * Implemented by each platform to supply platform-specific dependencies to LogKeep.
@@ -14,4 +15,5 @@ import app.cash.sqldelight.db.SqlDriver
  */
 interface PlatformHelper {
     fun provideSqlDriver(): SqlDriver
+    fun provideSessionFileWriter(): SessionFileWriter
 }
