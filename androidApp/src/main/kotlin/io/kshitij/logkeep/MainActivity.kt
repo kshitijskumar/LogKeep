@@ -8,9 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalUuidApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         println("LogStuff: activity oncreate")
         enableEdgeToEdge()
