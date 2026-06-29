@@ -2,12 +2,11 @@ package io.kshitij.logkeep.core.export
 
 import android.content.Context
 import android.content.Intent
-import androidx.core.content.FileProvider
 import java.io.File
 
 internal class AndroidSessionSharer(private val context: Context) : SessionSharer {
     override fun share(filePath: String) {
-        val uri = FileProvider.getUriForFile(
+        val uri = LogKeepFileProvider.getUriForFile(
             context,
             "${context.packageName}.logkeep.fileprovider",
             File(filePath)

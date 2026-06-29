@@ -11,7 +11,7 @@
             android:exported="false"
             android:label="LogKeep" />
         <provider
-            android:name="androidx.core.content.FileProvider"
+            android:name="io.kshitij.logkeep.core.export.LogKeepFileProvider"
             android:authorities="${applicationId}.logkeep.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
