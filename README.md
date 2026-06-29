@@ -17,10 +17,16 @@ When QA reports a bug, LogKeep lets you ask for the log file from their device i
 
 ## Screenshots
 
-<img src="screenshots/host_app.png" height="400" alt="Host app with floating Logs button" />
-<img src="screenshots/sessions.png" height="400" alt="Sessions list" />
-<img src="screenshots/logs.png" height="400" alt="Log entries" />
-<img src="screenshots/filter.png" height="400" alt="Filter by level and tag" />
+<table>
+  <tr>
+    <td><img src="screenshots/host_app.png" height="400" alt="Host app with floating Logs button" /></td>
+    <td><img src="screenshots/sessions.png" height="400" alt="Sessions list" /></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/logs.png" height="400" alt="Log entries" /></td>
+    <td><img src="screenshots/filter.png" height="400" alt="Filter by level and tag" /></td>
+  </tr>
+</table>
 
 ---
 
