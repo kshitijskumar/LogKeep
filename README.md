@@ -1,11 +1,38 @@
 # LogKeep
 
-**LogKeep** is a Kotlin Multiplatform library for capturing, storing, and viewing in-app logs during debug sessions — think Chucker, but for logs.
+**LogKeep** is an Android library for capturing, storing, viewing, and sharing in-app logs during debug and QA sessions — think Chucker, but for logs.
 
-- Automatically captures logs to a local SQLite database organized by session
-- In-app viewer: browse sessions, filter by level or tag, delete old sessions
-- Detects clean vs crashed sessions so you never lose logs after a crash
-- No-op in release builds when `isEnabled = false` — all calls are skipped, no DB writes, no UI shown
+When QA reports a bug, LogKeep lets you ask for the log file from their device instead of trying to reproduce the issue yourself. Logs are captured automatically every session, persisted across crashes, and can be shared as a plain-text file directly from the in-app viewer.
+
+---
+
+## How it works
+
+- **Automatic capture** — call `LogKeep.log()` anywhere in your app; entries are stored to a local SQLite database, batched for efficiency
+- **Session tracking** — every fresh app launch starts a new session; sessions persist across restarts and crashes, so logs are never lost
+- **In-app viewer** — browse sessions, filter by log level or tag, expand individual entries, and share a session's full log file via the system share sheet
+- **Zero release impact** — disabled by default; all calls are no-ops when `isEnabled = false`, with no DB writes, no background work, and no UI
+
+---
+
+## Screenshots
+
+> _Screenshots coming soon. Add them to `docs/screenshots/` and link them here._
+
+<!-- Example layout once screenshots exist:
+| Sessions list | Log entries | Share |
+|---|---|---|
+| ![Sessions](docs/screenshots/sessions.png) | ![Entries](docs/screenshots/entries.png) | ![Share](docs/screenshots/share.png) |
+-->
+
+---
+
+## Platform support
+
+| Platform | Status |
+|---|---|
+| Android | Supported |
+| iOS | Planned |
 
 ---
 
@@ -31,72 +58,158 @@ In your app/module `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.kshitijskumar:LogKeep:0.1.0-alpha01")
+    implementation("com.github.kshitijskumar:LogKeep:0.1.0-alpha03")
 }
 ```
 
-> Use `implementation` (not `debugImplementation`) — `LogKeep.log()` must be on the classpath in all build types since your app code calls it. Disable capture in release by setting `isEnabled = false` via manifest meta-data (see Configuration below).
+> Use `implementation` (not `debugImplementation`) — `LogKeep.log()` must be on the classpath in all build types because your code calls it directly. When `isEnabled` is `false`, all calls are no-ops with no database, no background work, and no UI.
+
+#### Enabling only in debug builds
+
+Use `manifestPlaceholders` in your `build.gradle.kts` to toggle the flag per build type:
+
+```kotlin
+android {
+    buildTypes {
+        getByName("debug") {
+            manifestPlaceholders["logkeepEnabled"] = "true"
+        }
+        getByName("release") {
+            manifestPlaceholders["logkeepEnabled"] = "false"
+        }
+    }
+}
+```
+
+Then reference the placeholder in `AndroidManifest.xml`:
+
+```xml
+<application>
+    <meta-data
+        android:name="logkeep.isEnabled"
+        android:value="${logkeepEnabled}" />
+</application>
+```
+
+This way LogKeep is live in debug builds and fully inert in release — no code changes needed between build types.
 
 ---
 
-## Usage
+## Setup
 
-### Android
+### Enable LogKeep
 
-LogKeep initializes itself automatically via a `ContentProvider` — no code required in `Application` or `Activity`.
+LogKeep initializes automatically via a `ContentProvider` — no `Application` or `Activity` code required. The only required step is enabling it in your `AndroidManifest.xml`:
+
+```xml
+<application>
+    <!-- Required: opt in to enable capture -->
+    <meta-data
+        android:name="logkeep.isEnabled"
+        android:value="true" />
+</application>
+```
+
+LogKeep is **disabled by default**. If `logkeep.isEnabled` is absent or `false`, no database is created, no logs are stored, and no UI is shown.
+
+### Log from anywhere
 
 ```kotlin
-// Log from anywhere in your app
 LogKeep.log(LogLevel.DEBUG, "Network", "Request started")
+LogKeep.log(LogLevel.INFO,  "Auth",    "User signed in")
 LogKeep.log(LogLevel.ERROR, "Network", "Request failed", exception)
 ```
 
 Available log levels: `VERBOSE`, `DEBUG`, `INFO`, `WARN`, `ERROR`
 
-To open the LogKeep viewer, launch `LogKeepActivity`:
+### Open the log viewer
+
+When LogKeep is enabled, it automatically injects a floating **"Logs" button** in the bottom-right corner of every Activity. Tapping it opens the log viewer — no code required.
+
+You can also launch it programmatically from your own debug menu:
 
 ```kotlin
 startActivity(Intent(context, LogKeepActivity::class.java))
 ```
 
-### Configuration (optional)
+From the viewer, QA can browse sessions, filter by log level or tag, and share the full log file for any session.
 
-Override defaults via `<meta-data>` in your `AndroidManifest.xml`:
+### Route an existing logger into LogKeep
 
-```xml
-<application>
-    <meta-data android:name="logkeep.isEnabled"          android:value="true" />
-    <meta-data android:name="logkeep.maxEntriesPerSession" android:value="1000" />
-    <meta-data android:name="logkeep.maxSessions"        android:value="5" />
-</application>
-```
-
-### iOS
-
-Call `LogKeepIos.start()` before logging, typically in your app's entry point:
+If you already have a logging abstraction, add a single line to route it:
 
 ```kotlin
-// In iOSApp.init() or SwiftUI @main body
-LogKeepIos.start(LogKeepConfig(isEnabled = true))
-```
-
-Then log the same way:
-
-```kotlin
-LogKeep.log(LogLevel.INFO, "AppStart", "App launched")
+// Example: Timber tree
+class LogKeepTree : Timber.Tree() {
+    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        val level = when (priority) {
+            Log.VERBOSE -> LogLevel.VERBOSE
+            Log.DEBUG   -> LogLevel.DEBUG
+            Log.INFO    -> LogLevel.INFO
+            Log.WARN    -> LogLevel.WARN
+            else        -> LogLevel.ERROR
+        }
+        LogKeep.log(level, tag ?: "App", message, t)
+    }
+}
 ```
 
 ---
 
-## Configuration reference
+## Configuration
 
-| Property | Default | Description |
-|---|---|---|
-| `isEnabled` | `true` | Set to `false` to disable all logging (no-op mode) |
-| `maxEntriesPerSession` | `1000` | Oldest entries are dropped when this limit is reached |
-| `maxSessions` | `5` | Oldest sessions are deleted when this limit is reached |
-| `maxBatchSize` | `20` | Number of entries to batch before flushing to DB |
-| `batchWindowMs` | `500` | Max time (ms) to wait before flushing a partial batch |
+All configuration is optional. Set overrides via `<meta-data>` in `AndroidManifest.xml`:
+
+```xml
+<application>
+    <meta-data android:name="logkeep.isEnabled"            android:value="true" />
+    <meta-data android:name="logkeep.maxEntriesPerSession" android:value="1000" />
+    <meta-data android:name="logkeep.maxSessions"          android:value="5" />
+</application>
+```
+
+### Configuration reference
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `logkeep.isEnabled` | Boolean | `false` | Master switch. Set to `true` to enable capture and the in-app viewer. Keep absent or `false` in release builds. |
+| `logkeep.maxEntriesPerSession` | Int | `1000` | Maximum log entries stored per session. When the limit is reached, the oldest entries in that session are dropped to make room for new ones. |
+| `logkeep.maxSessions` | Int | `5` | Maximum number of sessions retained on device. When this limit is reached, the oldest session (and all its entries) is deleted entirely. |
+
+> `maxBatchSize` (default `20`) and `batchWindowMs` (default `500 ms`) control how often entries are flushed to the database. These are not currently configurable via manifest and use their defaults.
+
+---
+
+## Log viewer features
+
+- **Session list** — sessions shown most-recent-first, each labelled with its start time and a clean/interrupted status indicator
+- **Entry list** — chronological log entries within a session, color-coded by level
+- **Filter by level** — show only `ERROR`, `WARN`, etc.
+- **Filter by tag** — narrow entries to a specific tag
+- **Share** — export the complete, unfiltered session as a human-readable `.txt` file via the system share sheet (Slack, email, Drive, etc.)
+- **Delete** — remove a session and all its entries from the device
+
+---
+
+## Exported log format
+
+Each exported file is a plain-text file readable in any editor:
+
+```
+Session started at: 10:32:00 - Jun 29 2025
+Total logs: 3
+
+
+10:32:01 - DEBUG - Network - Request started
+
+10:32:01 - INFO - Auth - User signed in
+
+10:32:05 - ERROR - Network - Request failed
+java.net.SocketTimeoutException: timeout
+    at okhttp3.internal.connection.RealCall.execute(RealCall.kt:144)
+    ...
+
+```
 
 ---
 
@@ -120,4 +233,4 @@ LogKeep.log(LogLevel.INFO, "AppStart", "App launched")
 
 ## License
 
-Apache 2.0
+[Apache 2.0](LICENSE)
